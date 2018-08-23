@@ -19,6 +19,12 @@ func Test_XML_isTextMime(t *testing.T) {
 	assert.Equal(t, isTextMime("ApPlicaTion/xMl"), true)
 }
 
+func Test_JSON_API_isTextMime(t *testing.T) {
+	assert.Equal(t, isTextMime("application/vnd.api+json"), true)
+	assert.Equal(t, isTextMime("application/vnd.api+json; charset=utf-8"), true)
+	assert.Equal(t, isTextMime("Application/VnD.aPi+jSon"), true)
+}
+
 func TestResponseWriter_Header(t *testing.T) {
 	w := NewResponse()
 	w.Header().Set("Foo", "bar")
