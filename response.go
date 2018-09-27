@@ -14,6 +14,7 @@ import (
 // in order to support the API Gateway Lambda HTTP "protocol".
 type ResponseWriter struct {
 	out           events.APIGatewayProxyResponse
+	isZip         bool
 	buf           bytes.Buffer
 	header        http.Header
 	wroteHeader   bool
@@ -76,9 +77,12 @@ func (w *ResponseWriter) CloseNotify() <-chan bool {
 
 // End the request.
 func (w *ResponseWriter) End() events.APIGatewayProxyResponse {
-	w.out.IsBase64Encoded = isBinary(w.header)
+	binary := isBinary(w.header)
 
-	if w.out.IsBase64Encoded {
+	if isZip(w.header.Get("Content-Type")){
+		w.out.Body = w.buf.String()
+	} else if binary {
+		w.out.IsBase64Encoded = binary
 		w.out.Body = base64.StdEncoding.EncodeToString(w.buf.Bytes())
 	} else {
 		w.out.Body = w.buf.String()
@@ -100,6 +104,16 @@ func isBinary(h http.Header) bool {
 	default:
 		return false
 	}
+}
+
+// isZip returns if the response is a type of zip file.
+func isZip(kind string) bool {
+	mt, _, err := mime.ParseMediaType(kind)
+	if err != nil {
+		return false
+	}
+
+	return mt == "application/zip"
 }
 
 // isTextMime returns true if the content type represents textual data.
